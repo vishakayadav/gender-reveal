@@ -6,7 +6,7 @@
 <title>Design preview</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Shantell+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg: url('../src/assets/theme-bg.jpg');
@@ -14,7 +14,7 @@
     --pink:#ff8fb8; --blue:#7fbaff;
   }
   *{box-sizing:border-box;}
-  body{margin:0;font-family:'Fredoka',system-ui,sans-serif;color:var(--ink);
+  body{margin:0;font-family:'Shantell Sans',system-ui,sans-serif;color:var(--ink);
        background:linear-gradient(160deg,#fdeef4,#eef5ff);padding:40px 28px 70px;}
   .board-title{text-align:center;font-weight:600;font-size:30px;margin:0 0 4px;color:#6a6076;}
   .board-sub{text-align:center;color:#9a90a6;margin:0 0 34px;font-weight:400;}
@@ -28,13 +28,13 @@
   .card h2{font-weight:600;font-size:23px;margin:.1em 0 .4em;}
   .grad{background:linear-gradient(90deg,var(--pink),var(--blue));-webkit-background-clip:text;background-clip:text;color:transparent;}
   .p{color:var(--ink-soft);font-weight:400;font-size:15px;margin:.4em 0;}
-  .btn{font-family:'Fredoka';font-weight:600;font-size:16px;border:0;border-radius:999px;
+  .btn{font-family:'Shantell Sans';font-weight:600;font-size:16px;border:0;border-radius:999px;
        padding:13px 22px;color:#5b4a63;background:linear-gradient(135deg,#ffc2dc,#bfe0ff);
        box-shadow:0 6px 16px rgba(150,130,170,.28);cursor:pointer;margin:6px 4px;display:inline-block;}
   .btn.ghost{background:linear-gradient(135deg,#ececf4,#e6eef7);color:#8a8296;}
-  .field{width:100%;padding:12px 14px;font-size:15px;font-family:'Fredoka';border:1px solid #ecdff0;
+  .field{width:100%;padding:12px 14px;font-size:15px;font-family:'Shantell Sans';border:1px solid #ecdff0;
          border-radius:14px;margin:8px 0;background:rgba(255,255,255,.8);color:var(--ink);}
-  .rhyme{font-weight:500;font-size:21px;line-height:1.5;margin:.2em 0 .1em;}
+  .rhyme{font-family:'Dancing Script',cursive;font-weight:700;font-size:28px;line-height:1.3;margin:.2em 0 .1em;}
   .progress{font-weight:600;font-size:17px;color:#8a7d95;}
   .code{font-weight:700;font-size:38px;letter-spacing:3px;margin:10px 0;}
   .link{color:#c98fb5;font-weight:500;text-decoration:none;font-size:14px;}
@@ -44,6 +44,17 @@
   .reveal .big{font-weight:700;font-size:32px;line-height:1.2;}
   .reveal.girl{background:linear-gradient(160deg,#ff9ec4,#ff6fae);}
   .reveal.boy{background:linear-gradient(160deg,#8ec5ff,#4aa8ff);}
+
+  /* full post-countdown reveal preview (over the themed background) */
+  .rv-tint{position:absolute;inset:0;z-index:1;}
+  .rv-tint.girl{background:radial-gradient(circle at 50% 55%,rgba(255,120,175,.34),rgba(255,120,175,.12));}
+  .rv-tint.boy{background:radial-gradient(circle at 50% 55%,rgba(74,168,255,.34),rgba(74,168,255,.12));}
+  .rv-veil{position:absolute;inset:0;z-index:0;background:radial-gradient(circle at 50% 45%,rgba(255,255,255,.28),rgba(255,255,255,.05));}
+  .rv{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:14px;}
+  .rv-congrats{font-weight:700;font-size:29px;line-height:1.05;color:#fff;margin:0 0 4px;text-shadow:0 4px 14px rgba(150,120,160,.55);}
+  .rv-rhyme{font-family:'Dancing Script',cursive;font-weight:700;font-size:21px;color:#fff;line-height:1.3;margin:0 0 8px;text-shadow:0 2px 10px rgba(150,120,160,.5);}
+  .rv-baby{width:120px;height:auto;filter:drop-shadow(0 10px 20px rgba(120,90,130,.45));}
+  .rv-big{font-weight:700;font-size:25px;color:#fff;margin-top:8px;text-shadow:0 4px 16px rgba(150,120,160,.5);}
 
   .laptop{max-width:1000px;margin:0 auto;border-radius:16px;overflow:hidden;
           box-shadow:0 26px 70px rgba(120,100,140,.35);border:10px solid #fff;background:#fff;}
@@ -75,8 +86,8 @@
     <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
     <div class="view">
       <div class="card">
-        <div class="rhyme grad">Twinkle, twinkle, little star&nbsp;💫</div>
-        <div class="rhyme">how we wonder what you are</div>
+        <div class="rhyme grad">Twinkle twinkle little star,</div>
+        <div class="rhyme">how we wonder what you are 💫</div>
         <h2 style="margin-top:16px">Hi Priya! What's your guess?</h2>
         <button class="btn">Boy 💙</button>
         <button class="btn">Girl 💖</button>
@@ -106,8 +117,8 @@
 
     <div class="cell"><p class="cap">Your guess — with rhyme 💫</p>
       <div class="phone"><div class="notch"></div><div class="view"><div class="card">
-        <div class="rhyme grad">Twinkle, twinkle,<br>little star 💫</div>
-        <div class="rhyme">how we wonder<br>what you are</div>
+        <div class="rhyme grad">Twinkle twinkle<br>little star,</div>
+        <div class="rhyme">how we wonder<br>what you are 💫</div>
         <h2 style="margin-top:14px">Hi Priya!<br>What's your guess?</h2>
         <button class="btn">Boy 💙</button>
         <button class="btn">Girl 💖</button>
@@ -141,16 +152,28 @@
       </div></div></div>
     </div>
 
-    <div class="cell"><p class="cap">Reveal — Girl 💖</p>
-      <div class="phone"><div class="notch"></div><div class="view"><div class="reveal girl">
-        <div class="big">It's a Girl! 💖</div>
-      </div></div></div>
+    <div class="cell"><p class="cap">Reveal — Girl 💖 (after countdown)</p>
+      <div class="phone"><div class="notch"></div><div class="view">
+        <div class="rv-veil"></div><div class="rv-tint girl"></div>
+        <div class="rv">
+          <div class="rv-congrats">Congratulations!</div>
+          <div class="rv-rhyme">Twinkle twinkle little star,<br>now we know what you are ✨</div>
+          <img class="rv-baby" src="../src/assets/baby-girl.png" alt="" />
+          <div class="rv-big">It's a GIRL! 💖</div>
+        </div>
+      </div></div>
     </div>
 
-    <div class="cell"><p class="cap">Reveal — Boy 💙</p>
-      <div class="phone"><div class="notch"></div><div class="view"><div class="reveal boy">
-        <div class="big">It's a Boy! 💙</div>
-      </div></div></div>
+    <div class="cell"><p class="cap">Reveal — Boy 💙 (after countdown)</p>
+      <div class="phone"><div class="notch"></div><div class="view">
+        <div class="rv-veil"></div><div class="rv-tint boy"></div>
+        <div class="rv">
+          <div class="rv-congrats">Congratulations!</div>
+          <div class="rv-rhyme">Twinkle twinkle little star,<br>now we know what you are ✨</div>
+          <img class="rv-baby" src="../src/assets/baby-boy.png" alt="" />
+          <div class="rv-big">It's a BOY! 💙</div>
+        </div>
+      </div></div>
     </div>
 
   </div>

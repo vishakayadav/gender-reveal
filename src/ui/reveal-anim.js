@@ -1,7 +1,9 @@
 // src/ui/reveal-anim.js — the reveal sequence: 5→1 countdown, rising pastel
-// balloons, confetti burst, then the "It's a …" message. Pure CSS + confetti,
-// no extra dependencies. Colours match the pastel background theme.
+// balloons, confetti burst, then "Congratulations!", the rhyme, a floating
+// baby illustration, and "It's a …". Pure CSS + confetti, no extra deps.
 import confetti from 'canvas-confetti';
+import babyGirl from '../assets/baby-girl.png';
+import babyBoy from '../assets/baby-boy.png';
 
 const PINKS = ['#ffb3d1', '#ff9ec4', '#ffc9de'];
 const BLUES = ['#a9d8ff', '#8ec5ff', '#c7e6ff'];
@@ -18,14 +20,22 @@ export function playReveal(reveal, opts = {}) {
   const doc = opts.document || document;
   const seconds = opts.seconds != null ? opts.seconds : 5;
 
+  const babySrc = gender === 'boy' ? babyBoy : babyGirl;
   const overlay = doc.createElement('div');
   overlay.className = 'reveal-overlay';
+  // The baby <img> src is set now (while hidden behind the countdown) so it
+  // finishes loading during the 5s countdown — no flash when the message shows.
   overlay.innerHTML = `
     <div class="reveal-veil"></div>
     <div class="reveal-tint"></div>
     <div class="reveal-balloons"></div>
     <div class="reveal-count"></div>
-    <div class="reveal-msg"><div class="reveal-big"></div><div class="reveal-sub"></div></div>`;
+    <div class="reveal-msg">
+      <div class="reveal-congrats">Congratulations!</div>
+      <div class="reveal-rhyme">Twinkle twinkle little star,<br>now we know what you are ✨</div>
+      <img class="reveal-baby" alt="" src="${babySrc}" />
+      <div class="reveal-big"></div>
+    </div>`;
   (opts.mount || doc.body).appendChild(overlay);
 
   const countEl = overlay.querySelector('.reveal-count');
@@ -81,9 +91,7 @@ export function playReveal(reveal, opts = {}) {
     for (let i = 0; i < 26; i++) setTimeout(makeBalloon, i * 120);
     burst();
     overlay.querySelector('.reveal-big').textContent =
-      message || (gender === 'boy' ? "It's a Boy! 💙" : "It's a Girl! 💖");
-    overlay.querySelector('.reveal-sub').textContent =
-      'Twinkle twinkle — now we know what you are ✨';
+      message || (gender === 'boy' ? "It's a BOY! 💙" : "It's a GIRL! 💖");
     msg.classList.add(gender, 'show');
   }
 

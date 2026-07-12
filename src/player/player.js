@@ -36,8 +36,8 @@ export async function initPlayer({ root, api, gameId, puzzles }) {
 
   async function goGuess() {
     const node = el(`<div class="card">
-      <div class="rhyme title-grad">Twinkle, twinkle, little star 💫</div>
-      <div class="rhyme">how we wonder what you are</div>
+      <div class="rhyme title-grad">Twinkle twinkle little star,</div>
+      <div class="rhyme">how we wonder what you are 💫</div>
       <h2 style="margin-top:14px">Hi ${state.name}! What's your guess?</h2>
       <button class="btn" id="boy">Boy 💙</button>
       <button class="btn" id="girl">Girl 💖</button>
