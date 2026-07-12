@@ -14,7 +14,24 @@ export async function initPlayer({ root, api, gameId, puzzles }) {
 
   state.game = await api.getGame(gameId);
 
-  const controller = { state, goGuess, submitGuess, answerCurrent, goWaiting, renderReveal };
+  const controller = { state, begin, goGuess, submitGuess, answerCurrent, goWaiting, renderReveal };
+
+  function sameName(a, b) {
+    return String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
+  }
+
+  // Route a chosen player: if they already finished, skip the game and go
+  // straight to the waiting room (which itself flips to the reveal once the
+  // host opens it and everyone is done); otherwise start the guess flow.
+  async function begin(name) {
+    state.name = name;
+    const finished = state.game.finished || [];
+    if (finished.some((n) => sameName(n, name))) {
+      await goWaiting();
+    } else {
+      await goGuess();
+    }
+  }
 
   function renderWelcome() {
     const opts = state.game.players.map((n) => `<option value="${n}"></option>`).join('');
@@ -28,8 +45,7 @@ export async function initPlayer({ root, api, gameId, puzzles }) {
     node.querySelector('#start').onclick = async () => {
       const val = node.querySelector('#name').value;
       if (!state.game.players.some((n) => n === val)) { alert('Please pick your name from the list.'); return; }
-      state.name = val;
-      await goGuess();
+      await begin(val);
     };
     set(node);
   }

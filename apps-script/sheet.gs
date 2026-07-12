@@ -102,3 +102,15 @@ function countFinished(gameId) {
   var statuses = sh.getRange(RESP_HEADER_ROW + 1, 6, last - RESP_HEADER_ROW, 1).getValues();
   return statuses.filter(function (s) { return s[0] === 'done'; }).length;
 }
+
+// Names of players whose status is 'done' — lets the player app send a
+// returning finished player straight to the waiting/reveal screen.
+function finishedNames(gameId) {
+  var sh = gameSheet(gameId);
+  var last = sh.getLastRow();
+  if (last <= RESP_HEADER_ROW) return [];
+  var rows = sh.getRange(RESP_HEADER_ROW + 1, 1, last - RESP_HEADER_ROW, 6).getValues();
+  var out = [];
+  rows.forEach(function (r) { if (r[5] === 'done') out.push(r[0]); });
+  return out;
+}

@@ -52,4 +52,32 @@ describe('player flow', () => {
     await c.goWaiting();
     expect(root.textContent).toContain('of 2');
   });
+
+  it('a finished player skips the game and goes straight to the waiting room', async () => {
+    const root = document.createElement('div');
+    const api = stubApi({
+      getGame: vi.fn(async () => ({
+        gameName: 'B', players: ['Priya', 'Arjun'], revealOpen: false,
+        codesIn: 1, total: 2, finished: ['Priya'],
+      })),
+    });
+    const c = await initPlayer({ root, api, gameId: 'g1', puzzles });
+    await c.begin('Priya');
+    expect(root.textContent).toContain('of 2');        // waiting room, not the guess screen
+    expect(api.submitGuess).not.toHaveBeenCalled();     // did not restart the game
+    clearTimeout(c._timer);
+  });
+
+  it('a not-yet-finished player starts the guess flow', async () => {
+    const root = document.createElement('div');
+    const api = stubApi({
+      getGame: vi.fn(async () => ({
+        gameName: 'B', players: ['Priya', 'Arjun'], revealOpen: false,
+        codesIn: 1, total: 2, finished: ['Arjun'],
+      })),
+    });
+    const c = await initPlayer({ root, api, gameId: 'g1', puzzles });
+    await c.begin('Priya');
+    expect(root.textContent).toContain('guess');        // guess screen
+  });
 });

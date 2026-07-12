@@ -50,6 +50,7 @@ function route_(body) {
         revealOpen: c.revealOpen,
         codesIn: countFinished(body.gameId),
         total: c.players.length,
+        finished: finishedNames(body.gameId),
       };
     }
     case 'submitGuess': {
