@@ -26,6 +26,32 @@ describe('player flow', () => {
     expect(root.textContent).toContain('Girl');
   });
 
+  it('welcome shows the admin-set game name as the title', async () => {
+    const root = document.createElement('div');
+    const api = stubApi({
+      getGame: vi.fn(async () => ({
+        gameName: 'Baby Sharma', players: ['Priya'], revealOpen: false,
+        codesIn: 0, total: 1, finished: [],
+      })),
+    });
+    await initPlayer({ root, api, gameId: 'g1', puzzles });
+    expect(root.textContent).toContain('Baby Sharma');          // name shown
+    expect(root.textContent).toContain('Baby Sharma Gender Reveal'); // "Gender Reveal" appended
+  });
+
+  it('does not append "Gender Reveal" when the name already contains it', async () => {
+    const root = document.createElement('div');
+    const api = stubApi({
+      getGame: vi.fn(async () => ({
+        gameName: 'Sharma Gender reveal', players: ['Priya'], revealOpen: false,
+        codesIn: 0, total: 1, finished: [],
+      })),
+    });
+    await initPlayer({ root, api, gameId: 'g1', puzzles });
+    expect(root.textContent).toContain('Sharma Gender reveal');
+    expect(root.textContent).not.toMatch(/Gender reveal Gender Reveal/i);
+  });
+
   it('submitting a guess calls api.submitGuess', async () => {
     const root = document.createElement('div');
     const api = stubApi();

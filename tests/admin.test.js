@@ -16,10 +16,10 @@ describe('admin flow', () => {
     const c = initAdmin({ root, api: stubApi(), origin: 'https://site' });
     const payload = c.buildPayload({
       gameName: 'Baby R', playersText: 'Priya\nArjun\n', revealOpen: false,
-      gender: 'girl', message: "It's a Girl!",
+      gender: 'girl',
     });
     expect(payload.players).toEqual(['Priya', 'Arjun']);
-    expect(payload.revealContent).toEqual({ gender: 'girl', message: "It's a Girl!" });
+    expect(payload.revealContent).toEqual({ gender: 'girl' });
     expect(payload.revealOpen).toBe(false);
   });
 

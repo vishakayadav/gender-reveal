@@ -15,11 +15,22 @@ function getIndexSheet() {
   return sh;
 }
 
-function tabName(gameId) { return 'g_' + gameId.slice(0, 8); }
+// Short unique token embedded in every game tab's name so we can find the tab
+// by gameId regardless of how the (game-name-based) tab is titled.
+function gameToken(gameId) { return 'g_' + gameId.slice(0, 8); }
+
+// Tab title = the game name + the token, e.g. "Baby R (g_1a2b3c4d)".
+// Sheet titles can't contain : \ / ? * [ ] and are capped at 100 chars.
+function tabName(gameId, gameName) {
+  var clean = String(gameName == null ? '' : gameName)
+    .replace(/[:\\\/?*\[\]]/g, ' ').replace(/\s+/g, ' ').trim();
+  var base = clean ? (clean + ' (' + gameToken(gameId) + ')') : gameToken(gameId);
+  return base.slice(0, 95);
+}
 
 function createGameTab(gameId, config) {
   var ss = getSS();
-  var sh = ss.insertSheet(tabName(gameId));
+  var sh = ss.insertSheet(tabName(gameId, config.gameName));
   // config block: key | value
   sh.getRange(1, 1, CONFIG_ROWS, 2).setValues([
     ['gameId', gameId],
@@ -39,9 +50,14 @@ function createGameTab(gameId, config) {
 }
 
 function gameSheet(gameId) {
-  var sh = getSS().getSheetByName(tabName(gameId));
-  if (!sh) throw new Error('game not found');
-  return sh;
+  var token = gameToken(gameId);
+  var sheets = getSS().getSheets();
+  for (var i = 0; i < sheets.length; i++) {
+    var n = sheets[i].getName();
+    // matches new "Name (g_xxxxxxxx)" tabs and legacy "g_xxxxxxxx" tabs
+    if (n === token || n.indexOf(token) !== -1) return sheets[i];
+  }
+  throw new Error('game not found');
 }
 
 function readConfig(gameId) {

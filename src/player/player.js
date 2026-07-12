@@ -35,8 +35,13 @@ export async function initPlayer({ root, api, gameId, puzzles }) {
 
   function renderWelcome() {
     const opts = state.game.players.map((n) => `<option value="${n}"></option>`).join('');
+    const gname = (state.game.gameName || '').trim();
+    // Show the game name, appending "Gender Reveal" only if it isn't already in there.
+    const title = !gname ? 'Gender Reveal'
+      : /gender\s*reveal/i.test(gname) ? gname
+      : `${gname} Gender Reveal`;
     const node = el(`<div class="card">
-      <h1 class="title-grad">Vishaka's Baby Gender Reveal Game 🎉</h1>
+      <h1 class="title-grad">${title} 🎉</h1>
       <p class="lead">Let's start !!!</p>
       <input id="name" list="names" placeholder="Start typing your name" autocomplete="off" />
       <datalist id="names">${opts}</datalist>
