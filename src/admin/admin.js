@@ -135,6 +135,8 @@ export function initAdmin({ root, api, origin }) {
 
 if (typeof window !== 'undefined' && document.getElementById('app') && !window.__ADMIN_TEST__) {
   const root = document.getElementById('app');
-  const c = initAdmin({ root, api: createApi(BACKEND_URL), origin: location.origin });
+  // Include the Vite base path so shared player links point at the subpath, not the domain root.
+  const origin = location.origin + import.meta.env.BASE_URL.replace(/\/$/, '');
+  const c = initAdmin({ root, api: createApi(BACKEND_URL), origin });
   c.renderLogin();
 }
