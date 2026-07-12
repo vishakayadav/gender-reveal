@@ -39,7 +39,9 @@ export async function initPlayer({ root, api, gameId, puzzles }) {
   }
 
   function renderWelcome() {
-    const opts = state.game.players.map((n) => `<option value="${n}"></option>`).join('');
+    // Native <select> — a reliable dropdown on mobile (datalist autocomplete is
+    // flaky on many mobile browsers).
+    const opts = state.game.players.map((n) => `<option value="${n}">${n}</option>`).join('');
     const gname = (state.game.gameName || '').trim();
     // Show the game name, appending "Gender Reveal" only if it isn't already in there.
     const title = !gname ? 'Gender Reveal'
@@ -48,8 +50,10 @@ export async function initPlayer({ root, api, gameId, puzzles }) {
     const node = el(`<div class="card">
       <h1 class="title-grad">${title} 🎉</h1>
       <p class="lead">Let's start !!!</p>
-      <input id="name" list="names" placeholder="Start typing your name" autocomplete="off" />
-      <datalist id="names">${opts}</datalist>
+      <select id="name">
+        <option value="" disabled selected>Pick your name…</option>
+        ${opts}
+      </select>
       <button class="btn" id="start">Start</button>
     </div>`);
     node.querySelector('#start').onclick = async () => {

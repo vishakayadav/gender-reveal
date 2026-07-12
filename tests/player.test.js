@@ -19,7 +19,7 @@ describe('player flow', () => {
     const root = document.createElement('div');
     const api = stubApi();
     const c = await initPlayer({ root, api, gameId: 'g1', puzzles });
-    expect(root.querySelectorAll('option').length).toBe(2); // datalist options
+    expect(root.querySelectorAll('#name option:not([value=""])').length).toBe(2); // player options
     c.state.name = 'Priya';
     await c.goGuess();
     expect(root.textContent).toContain('Boy');
