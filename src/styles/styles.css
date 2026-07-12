@@ -85,6 +85,17 @@ input, select, textarea {
   background: rgba(255, 255, 255, .85);
   color: var(--ink);
 }
+label { display: block; margin: 8px 0 2px; }
+/* checkbox sits inline beside its label text (not full-width) */
+input[type="checkbox"] {
+  width: auto;
+  display: inline-block;
+  margin: 0 8px 0 0;
+  padding: 0;
+  vertical-align: middle;
+}
+/* long placeholders — smaller text so they fit the box */
+#finalQuestion, #finalAnswers { font-size: 13px; }
 .hidden { display: none; }
 .progress { font-weight: 600; font-size: 18px; color: #8a7d95; }
 .big { font-size: 40px; font-weight: 700; text-align: center; margin: 12px 0; letter-spacing: 2px; }

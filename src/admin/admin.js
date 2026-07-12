@@ -67,7 +67,7 @@ export function initAdmin({ root, api, origin }) {
       <select id="gender"><option value="girl">Girl</option><option value="boy">Boy</option></select>
       <label>Final question (optional)</label>
       <input id="finalQuestion" placeholder="Question — split word-by-word into player codes" />
-      <input id="finalAnswers" placeholder="Final answer(s), comma-separated (required if question set)" />
+      <input id="finalAnswers" placeholder="Final answer(s), comma-separated (required if question is set)" />
       <label><input type="checkbox" id="revealOpen" /> Reveal open immediately (no waiting)</label>
       <button class="btn" id="create">Create game</button>
       <p><a href="#" id="manage">Manage an existing game →</a></p>
