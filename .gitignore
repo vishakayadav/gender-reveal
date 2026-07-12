@@ -1,0 +1,4 @@
+node_modules
+dist
+apps-script/.clasp.json
+.DS_Store
