@@ -17,7 +17,7 @@ state, Apps Script + Sheet is enough and free.
 
 ## 2. Apps Script as a REST-ish backend
 
-- One `doGet(e)` / `doPost(e)` entry point; branch on an `action` parameter.
+- A single `doPost(e)` entry point; branch on an `action` field in the JSON body.
 - Return JSON via `ContentService.createTextOutput(JSON.stringify(x))
   .setMimeType(ContentService.MimeType.JSON)`.
 - Deploy: **Deploy → New deployment → Web app → Execute as: Me → Who has access: Anyone**.
@@ -37,24 +37,35 @@ Browser `fetch` to Apps Script can hit CORS/redirect issues. Common workarounds:
 ## 3. Server-side reveal gating (anti-peek)
 
 The secret (gender) **must never be in client code**. Pattern:
-- Store the reveal payload only in the Sheet (server side).
-- A `getReveal` endpoint returns it **only if** gate conditions pass:
-  `allCodesIn === true && revealOpen === true`.
+- Store the reveal payload only in the Sheet (server side); `getReveal` returns only `{gender, message}`
+  once unlocked — never the final question/answers.
+- A `getReveal` endpoint returns it **only if** the gate passes: **all players fully done**
+  (`countFinished >= total`) **and** `revealOpen === true`. "Fully done" means keyed when the game has a
+  final key (see §4), else riddles-complete.
 - Disabling a button in the browser is cosmetic — real security is the server refusing to
   send the payload. Test the negative case: confirm it stays `{locked:true}` early.
 
-## 4. Deterministic personal codes
+## 4. Optional final-question codes + collaborative key
 
-- `code = shortToken(hash(normalize(name) + gameSalt))`.
-- **Deterministic** → the backend can re-derive/validate a code from the player list without
-  storing a lookup. **Normalize** (lowercase + trim) so codes are stable.
-- Keep tokens short & readable (avoid ambiguous chars like O/0, I/1).
+Codes are **optional** and only exist when the admin sets a **final question + answer(s)**:
+- The question is split **by words** into one part per player; part `k` is `Base64`-encoded and given to
+  the **k-th player to finish** the riddles (finish `position` stored per row).
+- Encoding is intentionally trivial (Base64, decodable by any online tool) — the "security" is social:
+  players must share and assemble their parts to read the question.
+- A player stays status `riddles` after the riddles and becomes `done` only when they submit a correct
+  **final key** (validated server-side against the answers, case-insensitive). Only `done` counts toward
+  the reveal gate, so everyone must key in.
+- With no final question, there is **no code** — the player goes straight to the waiting room and is
+  `done` at riddle completion. (The old deterministic hash-code scheme in `logic.gs`/`code.js` is now
+  unused.)
 
 ## 5. Shared progress without websockets
 
-- Players' "waiting room" **polls** `getGame` every few seconds for `N of M codes in`.
+- Players' "waiting room" **polls** `getGame` every few seconds for `N of M finished`, showing
+  *"waiting for the remaining N players to finish"* until everyone's done, then *"waiting for the host"*.
 - Identity is by **picking a name from a pre-set list** (autocomplete). Reopening the link and
-  re-selecting your name routes you to the right stage based on stored `status`.
+  re-selecting your name routes to the right stage by stored `status`: `done` → waiting/reveal,
+  `riddles` → resume at the code/key screen, otherwise → the guess flow.
 - Use distinct display names in the list to avoid collisions (add a last initial if needed).
 
 ## 6. Sharing across regions
@@ -82,8 +93,13 @@ The secret (gender) **must never be in client code**. Pattern:
 ## 9. Key project decisions (traceable to the spec)
 
 See `docs/superpowers/specs/2026-07-08-gender-reveal-design.md` for the authoritative design.
-Highlights:
-- Same puzzles for everyone; unique code per player generated on finish.
-- Guess captured on its own page, right after welcome, then row updated with code.
-- Reveal gated by `revealOpen` flag + all-codes-in, both enforced server-side.
-- Admin console generates games; one Sheet tab per game; no manual Sheet edits normally.
+Highlights (as currently implemented):
+- Same riddles for everyone; an **optional** final question yields per-player Base64 code parts and a
+  collaborative final-key gate (§4). No final question → no code.
+- Guess captured on its own page right after welcome, then the row is updated as the player progresses
+  (`playing` → `riddles` → `done`).
+- Reveal gated by `revealOpen` **and** all players fully done (keyed when a final key is set), enforced
+  server-side.
+- Admin console generates games; one Sheet tab per game (named after the game); no manual Sheet edits
+  normally. Note: a newer feature spec lives at
+  `docs/superpowers/specs/2026-07-12-final-code-reveal-key-design.md`.
