@@ -14,7 +14,7 @@ export function createApi(baseUrl, fetchImpl) {
     submitGuess: (gameId, name, guess) => call({ action: 'submitGuess', gameId, name, guess }),
     submitCode: (gameId, name) => call({ action: 'submitCode', gameId, name }),
     getReveal: (gameId, name) => call({ action: 'getReveal', gameId, name }),
-    checkFinalKey: (gameId, key) => call({ action: 'checkFinalKey', gameId, key }),
+    checkFinalKey: (gameId, name, key) => call({ action: 'checkFinalKey', gameId, name, key }),
     createGame: (adminPw, cfg) => call({ action: 'createGame', adminPw, ...cfg }),
     setRevealOpen: (adminPw, gameId, open) => call({ action: 'setRevealOpen', adminPw, gameId, open }),
   };

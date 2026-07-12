@@ -33,6 +33,9 @@ export function initAdmin({ root, api, origin }) {
 
   async function create(form) {
     const payload = buildPayload(form);
+    if (payload.finalQuestion && payload.finalAnswers.length === 0) {
+      throw new Error('Please add at least one final answer when a final question is set.');
+    }
     const res = await api.createGame(state.pw, payload);
     if (res.error) throw new Error(res.error);
     state.lastGameId = res.gameId;
@@ -64,7 +67,7 @@ export function initAdmin({ root, api, origin }) {
       <select id="gender"><option value="girl">Girl</option><option value="boy">Boy</option></select>
       <label>Final question (optional)</label>
       <input id="finalQuestion" placeholder="Question — split word-by-word into player codes" />
-      <input id="finalAnswers" placeholder="Final answer(s), comma-separated (optional)" />
+      <input id="finalAnswers" placeholder="Final answer(s), comma-separated (required if question set)" />
       <label><input type="checkbox" id="revealOpen" /> Reveal open immediately (no waiting)</label>
       <button class="btn" id="create">Create game</button>
       <p><a href="#" id="manage">Manage an existing game →</a></p>

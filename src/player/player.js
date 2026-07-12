@@ -25,9 +25,14 @@ export async function initPlayer({ root, api, gameId, puzzles }) {
   // host opens it and everyone is done); otherwise start the guess flow.
   async function begin(name) {
     state.name = name;
-    const finished = state.game.finished || [];
+    const finished = state.game.finished || [];   // fully done (keyed) → waiting/reveal
+    const riddled = state.game.riddled || [];      // riddles done, key not yet entered
     if (finished.some((n) => sameName(n, name))) {
       await goWaiting();
+    } else if (riddled.some((n) => sameName(n, name))) {
+      // Resume at the code/key screen (submitCode is idempotent for this player).
+      const res = await api.submitCode(gameId, name);
+      await renderFinish(res);
     } else {
       await goGuess();
     }
@@ -125,7 +130,7 @@ export async function initPlayer({ root, api, gameId, puzzles }) {
     </div>`);
     if (hasKey) {
       node.querySelector('#submitKey').onclick = async () => {
-        const r = await api.checkFinalKey(gameId, node.querySelector('#key').value);
+        const r = await api.checkFinalKey(gameId, state.name, node.querySelector('#key').value);
         if (r && r.ok) { await goWaiting(); }
         else { node.querySelector('#keyfb').textContent = 'Not quite — try again.'; }
       };

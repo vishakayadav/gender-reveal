@@ -105,7 +105,7 @@ describe('player flow', () => {
     const api = stubApi({
       getGame: vi.fn(async () => ({ gameName: 'B', players: ['Priya', 'Arjun'], revealOpen: false, codesIn: 1, total: 2, finished: [], hasFinalKey: true })),
       submitCode: vi.fn(async () => ({ ok: true, code: 'Ym95', position: 2, total: 2 })),
-      checkFinalKey: vi.fn(async (g, key) => ({ ok: String(key).trim().toLowerCase() === 'boy' })),
+      checkFinalKey: vi.fn(async (g, name, key) => ({ ok: String(key).trim().toLowerCase() === 'boy' })),
     });
     const c = await initPlayer({ root, api, gameId: 'g1', puzzles });
     c.state.name = 'Priya';
@@ -155,6 +155,32 @@ describe('player flow', () => {
     expect(root.textContent).toContain('of 2');        // waiting room, not the guess screen
     expect(api.submitGuess).not.toHaveBeenCalled();     // did not restart the game
     clearTimeout(c._timer);
+  });
+
+  it('reveal stays gated until everyone is keyed, even with host open', async () => {
+    const root = document.createElement('div');
+    const api = stubApi({
+      // host opened, but only 1 of 3 fully done (keyed) → must keep waiting
+      getGame: vi.fn(async () => ({ gameName: 'B', players: ['A', 'B', 'C'], revealOpen: true, codesIn: 1, total: 3, finished: ['A'], riddled: ['B'] })),
+    });
+    const c = await initPlayer({ root, api, gameId: 'g1', puzzles });
+    await c.goWaiting();
+    expect(root.textContent).toContain('remaining 2');
+    expect(api.getReveal).not.toHaveBeenCalled();   // reveal not fired
+    clearTimeout(c._timer);
+  });
+
+  it('a riddles-done (not keyed) player resumes at the code/key screen', async () => {
+    const root = document.createElement('div');
+    const api = stubApi({
+      getGame: vi.fn(async () => ({ gameName: 'B', players: ['Priya', 'Arjun'], revealOpen: false, codesIn: 0, total: 2, finished: [], riddled: ['Priya'], hasFinalKey: true })),
+      submitCode: vi.fn(async () => ({ ok: true, code: 'Ym95', position: 1, total: 2 })),
+    });
+    const c = await initPlayer({ root, api, gameId: 'g1', puzzles });
+    await c.begin('Priya');
+    expect(api.submitCode).toHaveBeenCalledWith('g1', 'Priya');
+    expect(root.querySelector('#key')).not.toBeNull();
+    expect(root.textContent).toContain('Ym95');
   });
 
   it('a not-yet-finished player starts the guess flow', async () => {

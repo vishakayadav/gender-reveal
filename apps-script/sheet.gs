@@ -40,8 +40,8 @@ function createGameTab(gameId, config) {
     ['gender', JSON.stringify(config.revealContent || {})],
     ['createdAt', new Date().toISOString()],
   ]);
-  sh.getRange(RESP_HEADER_ROW, 1, 1, 6)
-    .setValues([['name', 'guess', 'code', 'guessAt', 'finishedAt', 'status']]);
+  sh.getRange(RESP_HEADER_ROW, 1, 1, 7)
+    .setValues([['name', 'guess', 'code', 'guessAt', 'finishedAt', 'status', 'position']]);
   getIndexSheet().appendRow([
     gameId, config.gameName || '', new Date().toISOString(),
     config.revealOpen ? 'TRUE' : 'FALSE', (config.players || []).length,
@@ -103,30 +103,76 @@ function upsertGuess(gameId, name, guess) {
   }
 }
 
-function markFinished(gameId, name, code) {
+// Row status flow:
+//   'playing'  → guessed, still solving riddles
+//   'riddles'  → finished riddles, code assigned, awaiting the final key
+//                (only for games that have a final key)
+//   'done'     → fully complete: no-key games at riddle completion; key games
+//                once the correct final key is entered. Only 'done' counts
+//                toward the reveal gate.
+
+function playerStatus(gameId, name) {
+  var sh = gameSheet(gameId);
+  var row = findResponseRow(sh, name);
+  return row === -1 ? '' : sh.getRange(row, 6).getValue();
+}
+
+// { code, position } already recorded for a player who finished the riddles.
+function riddleInfo(gameId, name) {
+  var sh = gameSheet(gameId);
+  var row = findResponseRow(sh, name);
+  if (row === -1) return { code: '', position: 0 };
+  return { code: sh.getRange(row, 3).getValue(), position: sh.getRange(row, 7).getValue() };
+}
+
+// Record riddle completion: store code + position and set status
+// ('riddles' when a final key gates the reveal, else 'done').
+function recordRiddles(gameId, name, code, position, status) {
   var sh = gameSheet(gameId);
   var row = findResponseRow(sh, name);
   if (row === -1) throw new Error('no guess row for ' + name);
-  sh.getRange(row, 3, 1, 4).setValues([[code, sh.getRange(row, 4).getValue(),
-    new Date().toISOString(), 'done']]);
+  sh.getRange(row, 3).setValue(code);
+  sh.getRange(row, 5).setValue(new Date().toISOString());
+  sh.getRange(row, 6).setValue(status);
+  sh.getRange(row, 7).setValue(position);
 }
 
-function countFinished(gameId) {
+// Correct final key entered → the player is fully done.
+function markKeyed(gameId, name) {
   var sh = gameSheet(gameId);
-  var last = sh.getLastRow();
-  if (last <= RESP_HEADER_ROW) return 0;
-  var statuses = sh.getRange(RESP_HEADER_ROW + 1, 6, last - RESP_HEADER_ROW, 1).getValues();
-  return statuses.filter(function (s) { return s[0] === 'done'; }).length;
+  var row = findResponseRow(sh, name);
+  if (row !== -1) sh.getRange(row, 6).setValue('done');
 }
 
-// Names of players whose status is 'done' — lets the player app send a
-// returning finished player straight to the waiting/reveal screen.
-function finishedNames(gameId) {
+function statusColumn_(gameId) {
   var sh = gameSheet(gameId);
   var last = sh.getLastRow();
   if (last <= RESP_HEADER_ROW) return [];
-  var rows = sh.getRange(RESP_HEADER_ROW + 1, 1, last - RESP_HEADER_ROW, 6).getValues();
+  return sh.getRange(RESP_HEADER_ROW + 1, 1, last - RESP_HEADER_ROW, 6).getValues();
+}
+
+// 'done' count — the only thing that gates the reveal.
+function countFinished(gameId) {
+  return statusColumn_(gameId).filter(function (r) { return r[5] === 'done'; }).length;
+}
+
+// Players who have finished the riddles (assigned a code): 'riddles' or 'done'.
+// Used to assign the next finish position.
+function countRiddleDone(gameId) {
+  return statusColumn_(gameId).filter(function (r) { return r[5] === 'riddles' || r[5] === 'done'; }).length;
+}
+
+// Fully-done ('done') names — returning such a player goes straight to waiting.
+function finishedNames(gameId) {
   var out = [];
-  rows.forEach(function (r) { if (r[5] === 'done') out.push(r[0]); });
+  statusColumn_(gameId).forEach(function (r) { if (r[5] === 'done') out.push(r[0]); });
+  return out;
+}
+
+// Finished-riddles-but-not-keyed names — returning such a player resumes at the
+// code/key screen (not restarting the riddles).
+function riddledNames(gameId) {
+  var out = [];
+  statusColumn_(gameId).forEach(function (r) { if (r[5] === 'riddles') out.push(r[0]); });
   return out;
 }

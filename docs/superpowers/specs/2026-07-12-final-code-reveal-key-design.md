@@ -66,14 +66,20 @@ After the last riddle (`answerCurrent` → `submitCode`):
     - On submit → `api.checkFinalKey`; `ok` → `goWaiting()`; else show "Not quite — try again."
   - If not `hasFinalKey`: a **Continue** button → `goWaiting()`.
 
-Finished-player redirect (existing `begin`) is unchanged: a returning done player goes straight to
-the waiting room (they've already passed this screen). Accepted caveat: refreshing on the key screen
-bypasses the key box — harmless because the key only advances to waiting and the host still gates the
-reveal.
+Returning-player redirect (`begin`): a `done` (keyed) player → waiting room; a `riddled`
+(riddles-done, not keyed) player → resumes at the code/key screen; otherwise → guess flow.
 
-## Status timing
-`status = 'done'` is still set at riddle completion (in `submitCode`), unchanged. The key box is a
-client-side step between finishing and the waiting room.
+## Status timing (revised — reveal waits on keys, not riddles)
+Row status flows `playing → riddles → done`:
+- `submitCode` (riddle completion) stores the code + finish position and sets status **`riddles`**
+  when the game has a final key, or **`done`** when it doesn't.
+- `checkFinalKey(gameId, name, key)` marks the player **`done`** on a correct key.
+
+Only **`done`** counts toward the reveal gate (`countFinished`), so with a final key the reveal cannot
+fire until *every* player has entered the key (and the host has opened it). `getGame` also returns a
+`riddled` list; a returning riddles-done-but-not-keyed player resumes at the code/key screen
+(`submitCode` is idempotent — it reuses the stored code/position), so refreshing never bypasses the key
+or dead-locks the gate.
 
 ## Tests
 - `logic`/backend: `parts()` splits by words evenly with remainder to earlier groups; validation

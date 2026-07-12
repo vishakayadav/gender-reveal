@@ -43,6 +43,17 @@ describe('admin flow', () => {
     expect(link).toBe('https://site/play.html?game=abcd1234');
   });
 
+  it('create requires a final answer when a final question is set', async () => {
+    const api = stubApi();
+    const c = initAdmin({ root: document.createElement('div'), api, origin: 'https://site' });
+    c.setPassword('pw');
+    await expect(c.create({
+      gameName: 'B', playersText: 'A\nB', revealOpen: false, gender: 'boy',
+      finalQuestion: 'what is it now', finalAnswers: '',
+    })).rejects.toThrow(/final answer/i);
+    expect(api.createGame).not.toHaveBeenCalled();
+  });
+
   it('extractGameId reads ?game= from a link and passes through a raw id', () => {
     const c = initAdmin({ root: document.createElement('div'), api: stubApi(), origin: 'https://site' });
     expect(c.extractGameId('https://site/play.html?game=abcd1234')).toBe('abcd1234');
