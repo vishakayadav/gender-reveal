@@ -14,7 +14,7 @@ export async function initPlayer({ root, api, gameId, puzzles }) {
 
   state.game = await api.getGame(gameId);
 
-  const controller = { state, begin, goGuess, submitGuess, answerCurrent, goWaiting, renderReveal };
+  const controller = { state, begin, goGuess, submitGuess, answerCurrent, renderFinish, goWaiting, renderReveal };
 
   function sameName(a, b) {
     return String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
@@ -98,18 +98,40 @@ export async function initPlayer({ root, api, gameId, puzzles }) {
     }
     if (state.idx < P.length - 1) { state.idx++; renderPuzzle(); return; }
     const res = await api.submitCode(gameId, state.name);
-    state.code = res.code;
-    renderCode();
+    await renderFinish(res);
   }
 
-  function renderCode() {
+  async function renderFinish(res) {
+    // No final question configured for this game → no code; go straight to waiting.
+    if (!res || !res.code) { await goWaiting(); return; }
+    state.code = res.code;
+    const hasKey = !!(state.game && state.game.hasFinalKey);
+    const at = res.position != null ? `You completed the riddles at #${res.position}` : '';
+    const gate = hasKey
+      ? `<hr />
+         <p>Join everyone's decrypted parts (in finish order) to read the final question, then:</p>
+         <label>Enter the final key for reveal</label>
+         <input id="key" placeholder="Your answer" autocomplete="off" />
+         <button class="btn" id="submitKey">Unlock 🔑</button>
+         <p id="keyfb"></p>`
+      : `<button class="btn" id="next">Continue</button>`;
     const node = el(`<div class="card">
-      <h2>You did it, ${state.name}! 🎉</h2>
-      <p>Your personal code:</p>
-      <div class="big">${state.code}</div>
-      <button class="btn" id="next">Continue</button>
+      <h2>Congrats ${state.name} 🎉</h2>
+      ${at ? `<p>${at}</p>` : ''}
+      <p>Your secret code:</p>
+      <div class="code-box" id="code">${state.code}</div>
+      <p class="foot"><a href="https://www.base64decode.org/" target="_blank" rel="noopener">Decrypt your code →</a></p>
+      ${gate}
     </div>`);
-    node.querySelector('#next').onclick = () => goWaiting();
+    if (hasKey) {
+      node.querySelector('#submitKey').onclick = async () => {
+        const r = await api.checkFinalKey(gameId, node.querySelector('#key').value);
+        if (r && r.ok) { await goWaiting(); }
+        else { node.querySelector('#keyfb').textContent = 'Not quite — try again.'; }
+      };
+    } else {
+      node.querySelector('#next').onclick = () => goWaiting();
+    }
     set(node);
   }
 
@@ -121,10 +143,16 @@ export async function initPlayer({ root, api, gameId, puzzles }) {
         const r = await api.getReveal(gameId, state.name);
         if (!r.locked) { renderReveal(r.reveal); return; }
       }
+      const remaining = g.total - g.codesIn;
+      // While anyone is still finishing, wait on the players — not the host.
+      // Only once everyone's done do we wait on the host to open the reveal.
+      const waitMsg = remaining > 0
+        ? `Waiting for the remaining ${remaining} player${remaining === 1 ? '' : 's'} to finish…`
+        : 'Waiting for the host to start the reveal 🔒';
       const node = el(`<div class="card">
         <h2>Almost there!</h2>
-        <div class="progress">${g.codesIn} of ${g.total} codes in</div>
-        <p>${g.revealOpen ? 'Waiting for everyone to finish…' : 'Waiting for the host to start the reveal 🔒'}</p>
+        <div class="progress">${g.codesIn} of ${g.total} finished</div>
+        <p>${waitMsg}</p>
       </div>`);
       set(node);
       controller._timer = setTimeout(tick, 4000);

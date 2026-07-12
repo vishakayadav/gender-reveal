@@ -27,12 +27,23 @@ function route_(body) {
   switch (body.action) {
     case 'createGame': {
       requireAdmin_(body);
+      var players = body.players || [];
+      var revealContent = body.revealContent || {};
+      var finalQuestion = String(body.finalQuestion || '').trim();
+      if (finalQuestion) {
+        var wc = finalQuestion.split(/\s+/).filter(function (w) { return w; }).length;
+        if (wc < players.length) {
+          throw new Error('Final question needs at least ' + players.length + ' words (one per player).');
+        }
+      }
+      revealContent.finalQuestion = finalQuestion;
+      revealContent.finalAnswers = body.finalAnswers || [];
       var gameId = Utilities.getUuid();
       createGameTab(gameId, {
         gameName: body.gameName,
-        players: body.players,
+        players: players,
         revealOpen: body.revealOpen,
-        revealContent: body.revealContent,
+        revealContent: revealContent,
       });
       return { gameId: gameId };
     }
@@ -44,6 +55,7 @@ function route_(body) {
     }
     case 'getGame': {
       var c = readConfig(body.gameId);
+      var rcg = c.gender || {};
       return {
         gameName: c.gameName,
         players: c.players,
@@ -51,6 +63,7 @@ function route_(body) {
         codesIn: countFinished(body.gameId),
         total: c.players.length,
         finished: finishedNames(body.gameId),
+        hasFinalKey: !!(rcg.finalQuestion && rcg.finalAnswers && rcg.finalAnswers.length),
       };
     }
     case 'submitGuess': {
@@ -58,9 +71,19 @@ function route_(body) {
       return { ok: true };
     }
     case 'submitCode': {
-      var code = generateCode(body.name, salt_());
+      var cfg = readConfig(body.gameId);
+      var rc = cfg.gender || {};
+      var total = cfg.players.length;
+      var position = countFinished(body.gameId) + 1;   // this player's finish order
+      var code = '';
+      if (rc.finalQuestion) {
+        var parts = splitParts(rc.finalQuestion, total);
+        code = Utilities.base64Encode(parts[position - 1] || '', Utilities.Charset.UTF_8);
+      }
       markFinished(body.gameId, body.name, code);
-      return { ok: true, code: code, codesIn: countFinished(body.gameId) };
+      var out = { ok: true, codesIn: countFinished(body.gameId), total: total };
+      if (rc.finalQuestion) { out.code = code; out.position = position; }
+      return out;
     }
     case 'getReveal': {
       var cfg = readConfig(body.gameId);
@@ -70,7 +93,16 @@ function route_(body) {
         revealOpen: cfg.revealOpen,
       });
       if (!unlocked) return { locked: true };
-      return { locked: false, reveal: cfg.gender };
+      var rcr = cfg.gender || {};
+      // Send only what the reveal UI needs — never the final question/answers.
+      return { locked: false, reveal: { gender: rcr.gender, message: rcr.message || '' } };
+    }
+    case 'checkFinalKey': {
+      var cfk = readConfig(body.gameId);
+      var answers = (cfk.gender || {}).finalAnswers || [];
+      var key = String(body.key == null ? '' : body.key).trim().toLowerCase();
+      var ok = answers.some(function (a) { return String(a).trim().toLowerCase() === key; });
+      return { ok: ok };
     }
     default:
       throw new Error('unknown action: ' + body.action);

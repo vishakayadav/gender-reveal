@@ -23,3 +23,20 @@ function generateCode(name, salt) {
 function isRevealUnlocked(o) {
   return o.revealOpen === true && o.total > 0 && o.codesIn >= o.total;
 }
+
+// MIRROR of src/lib/finalCode.js splitQuestion. Split a question into n contiguous
+// word-groups, as evenly as possible, remainder to the earlier groups.
+function splitParts(question, n) {
+  var words = String(question || '').trim().split(/\s+/).filter(function (w) { return w; });
+  var count = Math.max(1, n | 0);
+  var base = Math.floor(words.length / count);
+  var rem = words.length % count;
+  var parts = [];
+  var idx = 0;
+  for (var i = 0; i < count; i++) {
+    var take = base + (i < rem ? 1 : 0);
+    parts.push(words.slice(idx, idx + take).join(' '));
+    idx += take;
+  }
+  return parts;
+}

@@ -71,12 +71,75 @@ describe('player flow', () => {
     expect(root.textContent).toContain('ABCDEF');
   });
 
-  it('waiting room shows progress and reveal stays locked', async () => {
+  it('no final question: last riddle goes straight to the waiting room, no code', async () => {
     const root = document.createElement('div');
-    const api = stubApi();
+    const api = stubApi({
+      getGame: vi.fn(async () => ({ gameName: 'B', players: ['Priya', 'Arjun'], revealOpen: false, codesIn: 0, total: 2, finished: [] })),
+      submitCode: vi.fn(async () => ({ ok: true, codesIn: 1, total: 2 })), // no code
+    });
+    const c = await initPlayer({ root, api, gameId: 'g1', puzzles });
+    c.state.name = 'Priya';
+    await c.answerCurrent('a');
+    expect(root.textContent).toContain('of 2');       // waiting room
+    expect(root.querySelector('.code-box')).toBeNull(); // no code shown
+    clearTimeout(c._timer);
+  });
+
+  it('final question, no answers: shows finish position, code and decrypt link', async () => {
+    const root = document.createElement('div');
+    const api = stubApi({
+      getGame: vi.fn(async () => ({ gameName: 'B', players: ['Priya', 'Arjun'], revealOpen: false, codesIn: 0, total: 2, finished: [], hasFinalKey: false })),
+      submitCode: vi.fn(async () => ({ ok: true, code: 'dGhlIGNhcGl0YWw=', position: 1, total: 2 })),
+    });
+    const c = await initPlayer({ root, api, gameId: 'g1', puzzles });
+    c.state.name = 'Priya';
+    await c.answerCurrent('a');
+    expect(root.textContent).toContain('completed the riddles at #1');
+    expect(root.textContent).toContain('dGhlIGNhcGl0YWw=');
+    expect(root.querySelector('a').href).toContain('base64decode.org');
+    expect(root.querySelector('#key')).toBeNull();
+  });
+
+  it('final question + answers: correct key advances, wrong key shows error', async () => {
+    const root = document.createElement('div');
+    const api = stubApi({
+      getGame: vi.fn(async () => ({ gameName: 'B', players: ['Priya', 'Arjun'], revealOpen: false, codesIn: 1, total: 2, finished: [], hasFinalKey: true })),
+      submitCode: vi.fn(async () => ({ ok: true, code: 'Ym95', position: 2, total: 2 })),
+      checkFinalKey: vi.fn(async (g, key) => ({ ok: String(key).trim().toLowerCase() === 'boy' })),
+    });
+    const c = await initPlayer({ root, api, gameId: 'g1', puzzles });
+    c.state.name = 'Priya';
+    await c.answerCurrent('a');
+    expect(root.querySelector('#key')).not.toBeNull();
+    root.querySelector('#key').value = 'girl';
+    await root.querySelector('#submitKey').onclick();
+    expect(root.textContent).toContain('Not quite');
+    root.querySelector('#key').value = 'Boy';
+    await root.querySelector('#submitKey').onclick();
+    expect(root.textContent).toContain('of 2');       // waiting room
+    clearTimeout(c._timer);
+  });
+
+  it('waiting room: while players remain, waits on players (not the host)', async () => {
+    const root = document.createElement('div');
+    const api = stubApi(); // codesIn 0, total 2, revealOpen false
     const c = await initPlayer({ root, api, gameId: 'g1', puzzles });
     await c.goWaiting();
-    expect(root.textContent).toContain('of 2');
+    expect(root.textContent).toContain('0 of 2 finished');
+    expect(root.textContent).toContain('remaining 2 players');
+    expect(root.textContent).not.toContain('host');
+    clearTimeout(c._timer);
+  });
+
+  it('waiting room: everyone done but reveal closed → waits on the host', async () => {
+    const root = document.createElement('div');
+    const api = stubApi({
+      getGame: vi.fn(async () => ({ gameName: 'B', players: ['Priya', 'Arjun'], revealOpen: false, codesIn: 2, total: 2, finished: ['Priya', 'Arjun'] })),
+    });
+    const c = await initPlayer({ root, api, gameId: 'g1', puzzles });
+    await c.goWaiting();
+    expect(root.textContent).toContain('host');
+    clearTimeout(c._timer);
   });
 
   it('a finished player skips the game and goes straight to the waiting room', async () => {

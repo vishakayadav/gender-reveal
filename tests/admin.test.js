@@ -23,6 +23,16 @@ describe('admin flow', () => {
     expect(payload.revealOpen).toBe(false);
   });
 
+  it('buildPayload includes final question and comma-separated answers', () => {
+    const c = initAdmin({ root: document.createElement('div'), api: stubApi(), origin: 'https://site' });
+    const p = c.buildPayload({
+      gameName: 'B', playersText: 'A\nB', revealOpen: false, gender: 'boy',
+      finalQuestion: '  what is it ', finalAnswers: 'boy, a boy , BOY',
+    });
+    expect(p.finalQuestion).toBe('what is it');
+    expect(p.finalAnswers).toEqual(['boy', 'a boy', 'BOY']);
+  });
+
   it('create calls api and produces a player link', async () => {
     const root = document.createElement('div');
     const api = stubApi();

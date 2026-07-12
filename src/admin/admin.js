@@ -26,6 +26,8 @@ export function initAdmin({ root, api, origin }) {
       players,
       revealOpen: !!form.revealOpen,
       revealContent: { gender: form.gender },
+      finalQuestion: String(form.finalQuestion || '').trim(),
+      finalAnswers: String(form.finalAnswers || '').split(',').map((s) => s.trim()).filter(Boolean),
     };
   }
 
@@ -60,6 +62,9 @@ export function initAdmin({ root, api, origin }) {
       <textarea id="players" rows="6" placeholder="One player name per line"></textarea>
       <label>Reveal content</label>
       <select id="gender"><option value="girl">Girl</option><option value="boy">Boy</option></select>
+      <label>Final question (optional)</label>
+      <input id="finalQuestion" placeholder="Question — split word-by-word into player codes" />
+      <input id="finalAnswers" placeholder="Final answer(s), comma-separated (optional)" />
       <label><input type="checkbox" id="revealOpen" /> Reveal open immediately (no waiting)</label>
       <button class="btn" id="create">Create game</button>
       <p><a href="#" id="manage">Manage an existing game →</a></p>
@@ -72,6 +77,8 @@ export function initAdmin({ root, api, origin }) {
           playersText: node.querySelector('#players').value,
           revealOpen: node.querySelector('#revealOpen').checked,
           gender: node.querySelector('#gender').value,
+          finalQuestion: node.querySelector('#finalQuestion').value,
+          finalAnswers: node.querySelector('#finalAnswers').value,
         });
         renderResult(link);
       } catch (e) { node.querySelector('#err').textContent = e.message; }
