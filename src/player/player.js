@@ -19,8 +19,8 @@ export async function initPlayer({ root, api, gameId, puzzles }) {
   function renderWelcome() {
     const opts = state.game.players.map((n) => `<option value="${n}"></option>`).join('');
     const node = el(`<div class="card">
-      <h1>🎉 ${state.game.gameName || 'Gender Reveal'}</h1>
-      <p>Pick your name to begin.</p>
+      <h1 class="title-grad">Vishaka's Baby Gender Reveal Game 🎉</h1>
+      <p class="lead">Let's start !!!</p>
       <input id="name" list="names" placeholder="Start typing your name" autocomplete="off" />
       <datalist id="names">${opts}</datalist>
       <button class="btn" id="start">Start</button>
@@ -36,7 +36,9 @@ export async function initPlayer({ root, api, gameId, puzzles }) {
 
   async function goGuess() {
     const node = el(`<div class="card">
-      <h2>Hi ${state.name}! What's your guess?</h2>
+      <div class="rhyme title-grad">Twinkle, twinkle, little star 💫</div>
+      <div class="rhyme">how we wonder what you are</div>
+      <h2 style="margin-top:14px">Hi ${state.name}! What's your guess?</h2>
       <button class="btn" id="boy">Boy 💙</button>
       <button class="btn" id="girl">Girl 💖</button>
     </div>`);
@@ -110,12 +112,10 @@ export async function initPlayer({ root, api, gameId, puzzles }) {
   }
 
   function renderReveal(reveal) {
-    const cls = reveal.gender === 'boy' ? 'reveal-boy' : 'reveal-girl';
-    const node = el(`<div class="card ${cls}">
-      <div class="big">${reveal.message || (reveal.gender === 'boy' ? "It's a Boy! 💙" : "It's a Girl! 💖")}</div>
-    </div>`);
-    set(node);
-    import('../ui/confetti.js').then((m) => m.celebrate(reveal.gender)).catch(() => {});
+    // Full-screen sequence (countdown → balloons → confetti → message) mounts
+    // over everything, so clear the waiting card behind it.
+    root.innerHTML = '';
+    import('../ui/reveal-anim.js').then((m) => m.playReveal(reveal)).catch(() => {});
   }
 
   renderWelcome();
